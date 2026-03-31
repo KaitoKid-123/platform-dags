@@ -183,7 +183,7 @@ with DAG(
     watch_etl = SparkKubernetesSensor(
         task_id="watch_etl",
         namespace=K8S_NAMESPACE,
-        application_name="{{ task_instance.xcom_pull(task_ids='run_etl') }}",
+        application_name="{{ task_instance.xcom_pull(task_ids='run_etl')['metadata']['name'] }}",
         kubernetes_conn_id=K8S_CONN_ID,
         timeout=7200,
         poke_interval=30,
