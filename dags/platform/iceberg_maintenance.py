@@ -7,6 +7,8 @@ Giu Iceberg performance on dinh theo thoi gian.
 Cluster hien tai KHONG co Trino, nen dung Iceberg REST API de list tables
 va submit SparkApplication de chay maintenance operations.
 """
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
