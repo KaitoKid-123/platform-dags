@@ -13,11 +13,9 @@ DAG chi can: submit 1 Spark job, doi xong, verify, notify.
 SLA: Complete by 08:00 every day.
 Owner: team-finance
 """
-import os
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.configuration import conf
 from airflow.operators.python import PythonOperator
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.cncf.kubernetes.operators.spark_kubernetes import (
@@ -48,13 +46,9 @@ K8S_NAMESPACE = "team-finance"
 K8S_CONN_ID = "kubernetes_default"
 
 # SparkApp YAML nam cung folder voi DAG, duoc git-sync vao Airflow pod.
-# Phai dung relative path so voi DAGS_FOLDER vi Jinja2 >= 3.0 chặn absolute path
-# trong FileSystemLoader, khien TemplateNotFound du file ton tai.
-_dags_folder = conf.get("core", "dags_folder")
-SPARK_APP_YAML = os.path.relpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "spark-apps", "daily-revenue.yaml"),
-    _dags_folder,
-)
+# Jinja2 FileSystemLoader dung DAG's own directory lam searchpath (dag.folder),
+# nen path phai la relative so voi thu muc chua DAG file nay.
+SPARK_APP_YAML = "spark-apps/daily-revenue.yaml"
 
 
 def _get_slack_webhook():
