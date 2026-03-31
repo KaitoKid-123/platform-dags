@@ -1,0 +1,81 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: finance-daily-revenue-{{ ds_nodash }}
+  namespace: team-finance
+  labels:
+    app: finance-daily-revenue
+    team: finance
+    pipeline: revenue
+    layer: silver
+spec:
+  type: Python
+  pythonVersion: "3"
+  mode: cluster
+  image: gitea-http.platform-ops:3000/team-finance/etl:latest
+  imagePullPolicy: Always
+  mainApplicationFile: local:///app/src/jobs/daily_revenue_etl.py
+  arguments:
+    - "--date"
+    - "{{ ds }}"
+    - "--source-bucket"
+    - "team-finance"
+    - "--source-prefix"
+    - "raw/transactions"
+    - "--compact"
+  sparkVersion: "3.5.0"
+  restartPolicy:
+    type: OnFailure
+    onFailureRetries: 2
+    onFailureRetryInterval: 60
+    onSubmissionFailureRetries: 3
+    onSubmissionFailureRetryInterval: 30
+  sparkConf:
+    # S3 / MinIO
+    spark.hadoop.fs.s3a.endpoint: "http://minio.platform-storage:9000"
+    spark.hadoop.fs.s3a.path.style.access: "true"
+    spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
+    spark.hadoop.fs.s3a.connection.ssl.enabled: "false"
+    # Iceberg REST Catalog
+    spark.sql.extensions: "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
+    spark.sql.catalog.iceberg: "org.apache.iceberg.spark.SparkCatalog"
+    spark.sql.catalog.iceberg.type: "rest"
+    spark.sql.catalog.iceberg.uri: "http://iceberg-rest.platform-storage:8181"
+    spark.sql.catalog.iceberg.io-impl: "org.apache.iceberg.aws.s3.S3FileIO"
+    spark.sql.catalog.iceberg.s3.endpoint: "http://minio.platform-storage:9000"
+    spark.sql.catalog.iceberg.s3.path-style-access: "true"
+    # Performance
+    spark.sql.adaptive.enabled: "true"
+    spark.sql.adaptive.coalescePartitions.enabled: "true"
+    spark.sql.adaptive.skewJoin.enabled: "true"
+    spark.serializer: "org.apache.spark.serializer.KryoSerializer"
+  driver:
+    cores: 1
+    coreLimit: "1000m"
+    memory: "1g"
+    memoryOverhead: "512m"
+    serviceAccount: spark-team-finance
+    labels:
+      team: finance
+    envSecretKeyRefs:
+      AWS_ACCESS_KEY_ID:
+        name: team-finance-s3-creds
+        key: access_key
+      AWS_SECRET_ACCESS_KEY:
+        name: team-finance-s3-creds
+        key: secret_key
+  executor:
+    cores: 1
+    coreLimit: "1000m"
+    instances: 2
+    memory: "1g"
+    memoryOverhead: "512m"
+    labels:
+      team: finance
+    envSecretKeyRefs:
+      AWS_ACCESS_KEY_ID:
+        name: team-finance-s3-creds
+        key: access_key
+      AWS_SECRET_ACCESS_KEY:
+        name: team-finance-s3-creds
+        key: secret_key
