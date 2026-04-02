@@ -1,7 +1,7 @@
 apiVersion: sparkoperator.k8s.io/v1beta2
 kind: SparkApplication
 metadata:
-  name: finance-daily-revenue-{{ ds_nodash }}
+  name: finance-daily-revenue-{{ ds_nodash }}-{{ ti.run_id | replace('scheduled__', '') | replace('manual__', '') | replace(':', '-') | replace('+', '-') }}
   namespace: team-finance
   labels:
     app: finance-daily-revenue
@@ -12,7 +12,7 @@ spec:
   type: Python
   pythonVersion: "3"
   mode: cluster
-  image: gitea-http.platform-ops:3000/team-finance/etl:latest
+  image: ghcr.io/kaitokid-123/finance-app/etl:latest
   imagePullPolicy: Always
   mainApplicationFile: local:///app/src/jobs/daily_revenue_etl.py
   arguments:
