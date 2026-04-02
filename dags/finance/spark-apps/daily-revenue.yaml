@@ -1,7 +1,7 @@
 apiVersion: sparkoperator.k8s.io/v1beta2
 kind: SparkApplication
 metadata:
-  name: finance-daily-revenue-{{ ds_nodash }}-{{ (execution_date ~ "") | replace(":", "-") | replace("+", "-") | replace("T", "-") }}-{{ ti.run_id | replace("scheduled__", "") | replace("manual__", "") | replace(":", "-") | replace("+", "-") }}
+  name: finance-daily-revenue-{{ ds_nodash }}-{{ (execution_date ~ "") | replace(":", "-") | replace("+", "-") | replace("T", "-") }}-{{ ti.run_id | replace("scheduled__", "") | replace("manual__", "") | replace(":", "-") | replace("+", "-") | replace("T", "-") }}
   namespace: team-finance
   labels:
     app: finance-daily-revenue
