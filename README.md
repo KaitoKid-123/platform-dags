@@ -1,6 +1,6 @@
 # Platform DAGs
 
-Airflow DAGs cho Data Platform — dinh nghia cac workflow xu ly du lieu, duoc git-sync tu Gitea vao Airflow.
+Airflow DAGs cho Data Platform — dinh nghia cac workflow xu ly du lieu, duoc git-sync tu **GitHub** vao Airflow.
 
 ## Kien thuc nen biet
 
@@ -10,8 +10,8 @@ Airflow DAGs cho Data Platform — dinh nghia cac workflow xu ly du lieu, duoc g
 - Airflow doc thu muc `dags/` dinh ky va tu dong dang ky DAGs moi.
 
 ### Git-sync
-- Airflow trong cluster duoc cau hinh **git-sync** tu repo `platform-dags` tren Gitea.
-- Khi push code len Gitea → Airflow tu dong cap nhat DAGs (khong can redeploy).
+- Airflow trong cluster duoc cau hinh **git-sync** tu repo `platform-dags` tren GitHub.
+- Khi push code len GitHub → Airflow tu dong cap nhat DAGs (khong can redeploy).
 - SparkApplication YAML templates nam trong `dags/<team>/spark-apps/` cung duoc sync vao Airflow pod.
 
 ## Cau truc thu muc
@@ -62,7 +62,7 @@ Moi team co thu muc `spark-apps/` chua YAML dinh nghia SparkApplication. Cac fil
 1. Tao file `.py` trong `dags/<team>/` hoac `dags/platform/`.
 2. Tao SparkApplication YAML trong `dags/<team>/spark-apps/` (neu can Spark job).
 3. Import modules tu `dags/_shared/` neu can.
-4. Push len Gitea repo `platform-dags` → Airflow tu dong nhan DAG moi.
+4. Push len GitHub repo `platform-dags` → Airflow tu dong nhan DAG moi.
 
 ## Lien ket voi cac project khac
 
@@ -76,4 +76,4 @@ Moi team co thu muc `spark-apps/` chua YAML dinh nghia SparkApplication. Cac fil
 
 - Cluster hien tai dung **MinIO** (khong phai Ceph) va **Iceberg REST Catalog** (khong co Trino).
 - Module `_shared/` la code Python thuan — khong phai DAG, Airflow se khong dang ky chung nhu DAG.
-- SparkApp YAML dung **Gitea Container Registry** (`gitea-http.platform-ops:3000`) de pull image.
+- SparkApp YAML dung **GitHub Container Registry** (`ghcr.io/KaitoKid-123/finance-app/etl`) de pull image.

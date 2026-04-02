@@ -177,6 +177,8 @@ with DAG(
         application_file=SPARK_APP_YAML,
         kubernetes_conn_id=K8S_CONN_ID,
         do_xcom_push=True,
+        # Cleanup SparkApplication when task fails/cancels so retry doesn't 409 Conflict
+        delete_on_termination=True,
     )
 
     # 2. Wait for Spark job to complete
