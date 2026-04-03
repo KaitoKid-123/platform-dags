@@ -34,11 +34,8 @@ DEFAULT_ARGS = {
 
 ICEBERG_REST = "http://iceberg-rest.platform-storage:8181"
 
-SPARK_APP_YAML = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "spark-apps",
-    "monthly-reconcile.yaml",
-)
+# Relative path so Jinja2 FileSystemLoader resolves from dag.folder
+SPARK_APP_YAML = "spark-apps/monthly-reconcile.yaml"
 
 
 def post_reconcile_check(**context):
@@ -120,7 +117,7 @@ with DAG(
     watch_reconcile = SparkKubernetesSensor(
         task_id="watch_reconcile",
         namespace="team-finance",
-        application_name="{{ task_instance.xcom_pull(task_ids='run_reconcile') }}",
+        application_name="{{ task_instance.xcom_pull(task_ids='run_reconcile')['metadata']['name'] }}",
         kubernetes_conn_id="kubernetes_default",
         timeout=14400,
         poke_interval=60,
