@@ -32,6 +32,8 @@ spec:
     spark.hadoop.fs.s3a.connection.ssl.enabled: "false"
     # AWS SDK region (required by Iceberg S3FileIO)
     spark.emr-serverless.override.region: "us-east-1"
+    spark.driver.extraJavaOptions: "-Daws.region=us-east-1"
+    spark.executor.extraJavaOptions: "-Daws.region=us-east-1"
     # Iceberg REST Catalog
     spark.sql.extensions: "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
     spark.sql.catalog.iceberg: "org.apache.iceberg.spark.SparkCatalog"
@@ -55,8 +57,6 @@ spec:
       AWS_SECRET_ACCESS_KEY:
         name: team-finance-s3-creds
         key: secret_key
-    env:
-      AWS_REGION: "us-east-1"
   executor:
     cores: 1
     coreLimit: "1000m"
@@ -70,5 +70,3 @@ spec:
       AWS_SECRET_ACCESS_KEY:
         name: team-finance-s3-creds
         key: secret_key
-    env:
-      AWS_REGION: "us-east-1"
