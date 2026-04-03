@@ -12,7 +12,7 @@ spec:
   type: Python
   pythonVersion: "3"
   mode: cluster
-  image: ghcr.io/kaitokid-123/finance-app/etl:24c1a7491a9c
+  image: ghcr.io/kaitokid-123/finance-app/etl:24c1a7491a9ce3a866de033825c9ee4cd251752f
   imagePullPolicy: Always
   mainApplicationFile: local:///app/src/jobs/daily_revenue_etl.py
   arguments:
