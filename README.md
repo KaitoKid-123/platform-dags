@@ -1,79 +1,82 @@
 # Platform DAGs
 
-Airflow DAGs cho Data Platform — dinh nghia cac workflow xu ly du lieu, duoc git-sync tu **GitHub** vao Airflow.
+Airflow DAGs cho Data Platform — định nghĩa các workflow xử lý dữ liệu, được git-sync từ **GitHub** vào Airflow.
 
-## Kien thuc nen biet
+## Kiến thức nền tảng
 
-### Airflow DAG la gi?
-- **DAG** (Directed Acyclic Graph) la mot workflow gom nhieu task duoc thuc thi theo thu tu.
-- Moi file `.py` trong `dags/` dinh nghia 1 hoac nhieu DAG.
-- Airflow doc thu muc `dags/` dinh ky va tu dong dang ky DAGs moi.
+### Airflow DAG là gì?
+- **DAG** (Directed Acyclic Graph) là một workflow gồm nhiều task được thực thi theo thứ tự.
+- Mỗi file `.py` trong `dags/` định nghĩa 1 hoặc nhiều DAG.
+- Airflow đọc thư mục `dags/` định kỳ và tự động đăng ký DAGs mới.
 
 ### Git-sync
-- Airflow trong cluster duoc cau hinh **git-sync** tu repo `platform-dags` tren GitHub.
-- Khi push code len GitHub → Airflow tu dong cap nhat DAGs (khong can redeploy).
-- SparkApplication YAML templates nam trong `dags/<team>/spark-apps/` cung duoc sync vao Airflow pod.
+- Airflow trong cluster được cấu hình **git-sync** từ repo `platform-dags` trên **GitHub**.
+- Khi push code lên GitHub → Airflow tự động cập nhật DAGs (không cần redeploy).
+- SparkApplication YAML templates nằm trong `dags/<team>/spark-apps/` cũng được sync cùng.
 
-## Cau truc thu muc
+## Cấu trúc thư mục
 
 ```
 platform-dags/
-+-- dags/
-|   +-- platform/                           # DAGs cap platform (maintenance, monitoring)
-|   |   +-- daily_minio_health.py           #   Kiem tra MinIO + Iceberg REST health
-|   |   +-- iceberg_maintenance.py          #   Compact files + expire snapshots
-|   +-- finance/                            # DAGs cua team Finance
-|   |   +-- finance_daily_revenue_pipeline.py #  ETL daily: S3 bronze → Iceberg silver
-|   |   +-- finance_monthly_reconcile.py    #   Doi soat hang thang
-|   |   +-- spark-apps/                     #   SparkApplication YAML templates
-|   |       +-- daily-revenue.yaml          #     Spark job config cho daily ETL
-|   |       +-- monthly-reconcile.yaml      #     Spark job config cho reconcile
-|   +-- _shared/                            # Modules dung chung cho nhieu DAGs
-|       +-- spark_operator_task.py          #   Helper tao SparkApplication task
-|       +-- quality_gate_task.py            #   Data quality check qua Iceberg REST API
-|       +-- notification_task.py            #   Gui thong bao (Slack)
-+-- plugins/
-    +-- iceberg_lineage_plugin.py           # Airflow plugin theo doi data lineage (placeholder)
+├── dags/
+│   ├── _shared/                              # Modules dùng chung
+│   │   ├── spark_operator_task.py             #   make_spark_task() helper
+│   │   ├── quality_gate_task.py               #   Iceberg REST quality gate
+│   │   └── notification_task.py               #   Slack notifications
+│   ├── platform/                             # DAGs cấp platform (ops/maintenance)
+│   │   ├── daily_minio_health.py              #   Health check: MinIO + Iceberg REST
+│   │   └── iceberg_maintenance.py             #   Snapshot expire + file compaction
+│   └── finance/                              # DAGs của team Finance
+│       ├── finance_daily_revenue_pipeline.py #   ETL daily: S3 bronze → Iceberg silver
+│       ├── finance_monthly_reconcile.py      #   Đối soát hàng tháng
+│       └── spark-apps/                       #   SparkApplication YAML templates
+│           ├── daily-revenue.yaml             #     daily_revenue_etl job
+│           └── monthly-reconcile.yaml          #     monthly_reconcile job
+├── plugins/
+│   └── iceberg_lineage_plugin.py             # Airflow plugin: data lineage (placeholder)
+└── README.md
 ```
 
-## Modules dung chung (`dags/_shared/`)
+## Modules dùng chung (`dags/_shared/`)
 
-### spark_operator_task.py
-Helper tao Airflow task chay **SparkApplication** tren Kubernetes thong qua Spark Operator.
+### `spark_operator_task.py`
+Helper tạo Airflow task chạy **SparkApplication** trên Kubernetes qua Spark Operator.
+Dùng `SparkKubernetesOperator` — task nhận YAML template và submit lên Spark Operator.
 
-### quality_gate_task.py
-Kiem tra data quality qua **Iceberg REST API** (khong can Trino):
-- Table ton tai va accessible
-- Snapshot moi nhat khong qua cu
-- Snapshot co du records
+### `quality_gate_task.py`
+Kiểm tra data quality qua **Iceberg REST API**:
+- Table tồn tại và accessible
+- Snapshot mới nhất không quá cũ
+- Số records đạt ngưỡng tối thiểu
 
-### notification_task.py
-Gui Slack thong bao khi pipeline thanh cong hoac that bai.
+### `notification_task.py`
+Gửi Slack notification khi pipeline thành công hoặc thất bại.
 
 ## SparkApplication YAML templates
 
-Moi team co thu muc `spark-apps/` chua YAML dinh nghia SparkApplication. Cac file nay:
-- Duoc git-sync vao Airflow pod cung voi DAGs
-- Duoc DAGs reference qua `os.path.join(os.path.dirname(__file__), "spark-apps", "xxx.yaml")`
-- Image tag duoc CI tu dong cap nhat khi build image moi
+Mỗi team có thư mục `spark-apps/` chứa YAML định nghĩa SparkApplication. Các file này:
+- Được git-sync vào Airflow pod cùng với DAGs
+- Được DAGs reference qua `os.path.join(os.path.dirname(__file__), "spark-apps", "xxx.yaml")`
+- Image tag được CI tự động cập nhật khi build image mới (xem `cicd-pipeline-detail.drawio`)
 
-## Cach viet DAG moi
+## Viết DAG mới
 
-1. Tao file `.py` trong `dags/<team>/` hoac `dags/platform/`.
-2. Tao SparkApplication YAML trong `dags/<team>/spark-apps/` (neu can Spark job).
-3. Import modules tu `dags/_shared/` neu can.
-4. Push len GitHub repo `platform-dags` → Airflow tu dong nhan DAG moi.
+1. Tạo file `.py` trong `dags/<team>/` hoặc `dags/platform/`.
+2. Tạo SparkApplication YAML trong `dags/<team>/spark-apps/` (nếu cần Spark job).
+3. Import modules từ `dags/_shared/` nếu cần.
+4. Push lên GitHub → Airflow tự động nhận DAG mới (git-sync poll 60s).
 
-## Lien ket voi cac project khac
+## Liên kết với các project khác
 
-| Project | Quan he |
+| Project | Quan hệ |
 |---------|---------|
-| **platform-infra** | Airflow duoc deploy boi ArgoCD, cau hinh git-sync tro ve repo nay |
-| **team-finance/finance-app** | Source code Spark jobs, build Docker image chay trong SparkApplication |
-| **team-finance/finance-config** | Pipeline config, S3 credentials |
+| **platform-infra** | Airflow được deploy bởi ArgoCD; git-sync trỏ đến repo này |
+| **team-finance/finance-app** | Source code Spark jobs, Docker image trên GHCR |
+| **team-finance/finance-config** | Pipeline config, Spark tuning, S3 credentials |
 
-## Luu y
+## Lưu ý
 
-- Cluster hien tai dung **MinIO** (khong phai Ceph) va **Iceberg REST Catalog** (khong co Trino).
-- Module `_shared/` la code Python thuan — khong phai DAG, Airflow se khong dang ky chung nhu DAG.
-- SparkApp YAML dung **GitHub Container Registry** (`ghcr.io/KaitoKid-123/finance-app/etl`) de pull image.
+- Cluster hiện tại dùng **MinIO** (S3-compatible) và **Iceberg REST Catalog** (không dùng Trino).
+- Module `_shared/` là code Python thuần — không phải DAG, Airflow không đăng ký chúng.
+- SparkApp YAML dùng **GitHub Container Registry** (`ghcr.io/KaitoKid-123/finance-app/etl`).
+- Git-sync credentials nằm trong Secret `github-dags-token` ở namespace `platform-data`.

@@ -16,9 +16,9 @@ spec:
   mainApplicationFile: local:///app/src/jobs/monthly_reconcile.py
   arguments:
     - "--year"
-    - "{{ execution_date.year }}"
+    - "{{ logical_date.year }}"
     - "--month"
-    - "{{ (execution_date.replace(day=1) - macros.timedelta(days=1)).month }}"
+    - "{{ (logical_date.replace(day=1) - macros.timedelta(days=1)).month }}"
   sparkVersion: "3.5.0"
   restartPolicy:
     type: OnFailure
