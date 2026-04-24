@@ -1,0 +1,74 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: redpanda-to-iceberg
+  namespace: platform-streaming
+spec:
+  type: Python
+  mode: cluster
+  image: ghcr.io/kaitokid-123/finance-app/etl:latest
+  imagePullPolicy: IfNotPresent
+  mainApplicationFile: local:///opt/spark/work-dir/src/jobs/streaming/redpanda_to_iceberg.py
+  sparkVersion: 3.5.0
+  restartPolicy:
+    type: Never
+  driver:
+    cores: 1
+    memory: 1g
+    serviceAccount: spark
+    labels:
+      app.kubernetes.io/name: redpanda-to-iceberg
+    env:
+      - name: REDPANDA_BOOTSTRAP_SERVERS
+        value: redpanda.platform-streaming.svc.cluster.local:9092
+      - name: REDPANDA_TOPIC
+        value: finance.transactions.v1
+      - name: ICEBERG_TARGET_TABLE
+        value: streaming.financial_transactions_events
+      - name: CHECKPOINT_LOCATION
+        value: s3a://team-finance/checkpoints/redpanda-to-iceberg/
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: iceberg-s3-secret
+            key: accessKey
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: iceberg-s3-secret
+            key: secretKey
+  executor:
+    cores: 1
+    instances: 1
+    memory: 1g
+    labels:
+      app.kubernetes.io/name: redpanda-to-iceberg
+    env:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: iceberg-s3-secret
+            key: accessKey
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: iceberg-s3-secret
+            key: secretKey
+  deps:
+    jars: []
+    files: []
+    pyFiles: []
+  sparkConf:
+    spark.sql.streaming.schemaInference: "false"
+    spark.sql.streaming.stopGracefullyOnShutdown: "true"
+    spark.sql.shuffle.partitions: "2"
+    spark.sql.streaming.stateStore.maintenanceInterval: "60s"
+    spark.hadoop.fs.s3a.endpoint: http://minio.platform-storage:9000
+    spark.hadoop.fs.s3a.path.style.access: "true"
+    spark.hadoop.fs.s3a.connection.ssl.enabled: "false"
+    spark.hadoop.fs.s3a.aws.credentials.provider: org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
+    spark.sql.catalog.iceberg: org.apache.iceberg.spark.SparkCatalog
+    spark.sql.catalog.iceberg.type: rest
+    spark.sql.catalog.iceberg.uri: http://iceberg-rest.platform-storage:8181
+    spark.sql.catalog.iceberg.warehouse: s3a://team-finance/warehouse/
+    spark.sql.catalog.iceberg.io-impl: org.apache.iceberg.aws.s3.S3FileIO
