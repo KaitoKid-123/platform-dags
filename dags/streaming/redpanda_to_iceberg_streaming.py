@@ -1,11 +1,10 @@
-"""
-Airflow DAG for the Redpanda -> Iceberg streaming job.
+"""Airflow DAG for the Redpanda -> Iceberg streaming job.
 
 This DAG is intentionally operationally friendly:
 - easy manual trigger for testing
 - pause/resume safe
-- optional bootstrap wait + smoke test hooks
-- submits a SparkApplication in the isolated streaming namespace
+- validates runtime config before submitting SparkApplication
+- submits in the isolated streaming namespace
 """
 from __future__ import annotations
 
