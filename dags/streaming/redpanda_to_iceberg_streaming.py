@@ -70,8 +70,6 @@ with DAG(
         application_file=SPARK_APP_YAML,
         do_xcom_push=False,
         kubernetes_conn_id="kubernetes_default",
-        get_logs=True,
-        reattach_on_restart=True,
     )
 
     end = EmptyOperator(task_id="end")
