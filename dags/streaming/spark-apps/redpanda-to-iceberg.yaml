@@ -6,7 +6,7 @@ metadata:
 spec:
   type: Python
   mode: cluster
-  image: ghcr.io/kaitokid-123/finance-app/etl:latest
+  image: ghcr.io/kaitokid-123/finance-app/etl:880dc1fb091df4c00dcd4ad5e28b513a32ee4369
   imagePullPolicy: IfNotPresent
   mainApplicationFile: local:///opt/spark/work-dir/src/jobs/streaming/redpanda_to_iceberg.py
   sparkVersion: 3.5.0
